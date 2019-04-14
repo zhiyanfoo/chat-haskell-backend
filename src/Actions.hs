@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Main where
+module Actions (jsonFile, Action, getJson) where
 
 import Data.Aeson
   ( FromJSON
@@ -29,15 +29,15 @@ import GHC.Exts (fromList)
 jsonFile :: FilePath
 jsonFile = "test.json"
 
-getJSON :: IO B.ByteString
-getJSON = B.readFile jsonFile
+getJson :: IO B.ByteString
+getJson = B.readFile jsonFile
 
 main = do
   putStrLn "ASD"
   print $ encode val
   print $ encode val2
   print $ parseMaybe parseArray2 =<< decode "[{\"a\":\"he\",\"b\":true}]"
-  file <- getJSON
+  file <- getJson
   print $ (decode file :: Maybe Action)
   BC.putStrLn file
 
