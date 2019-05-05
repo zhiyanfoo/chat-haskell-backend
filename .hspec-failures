@@ -1,1 +1,1 @@
-FailureReport {failureReportSeed = 8001603, failureReportMaxSuccess = 100, failureReportMaxSize = 100, failureReportMaxDiscardRatio = 10, failureReportPaths = [(["Actions","parsing"],"parse simple")]}
+FailureReport {failureReportSeed = 8001603, failureReportMaxSuccess = 100, failureReportMaxSize = 100, failureReportMaxDiscardRatio = 10, failureReportPaths = []}

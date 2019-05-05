@@ -1,18 +1,21 @@
-module ActionsSpec (spec) where
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
-import Test.Hspec (hspec, describe, it, Spec, around, before, focus, shouldBe)
-import Actions (Action, jsonFile, getJson)
+module ActionsSpec
+  ( spec
+  ) where
+
+import Actions (Action(..))
 import Control.Monad.IO.Class (liftIO)
-
+import Data.Aeson (decode)
+import qualified Data.ByteString.Lazy as B
+import Data.Maybe (fromJust)
+import Test.Hspec (Spec, around, before, describe, focus, hspec, it, shouldBe)
 
 spec :: Spec
 spec =
-  describe "parsing" $ do
-    before (print "ASD") $ do
-      it "parse simple" $ do
-        file1 <- liftIO getJson
-        file2 <- liftIO getJson
-        file1 `shouldBe` file2
-
-      it "parse simple" $ do
-        1 == 2
+  describe "decoding" $ do
+    it "decode message" $ do
+      let res = AddMessage "the author" "the message"
+      expected <- B.readFile "tests/results/action-message.json"
+      (fromJust . decode) expected `shouldBe` res
