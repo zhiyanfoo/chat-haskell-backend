@@ -25,8 +25,14 @@ encodePretty = P.encodePretty' P.defConfig {P.confCompare = P.compare}
 spec :: Spec
 spec =
   describe "encode" $ do
-    it "encode message response" $ do
+    it "encode message" $ do
       let res = AddMessage "the author" "the message"
       expected <- B.readFile "tests/results/response-message.json"
+      (decodeUtf8 . encodePretty) res `shouldBe`
+        (TL.strip . decodeUtf8) expected
+
+    it "encode user" $ do
+      let res = AddUser "the user"
+      expected <- B.readFile "tests/results/response-user.json"
       (decodeUtf8 . encodePretty) res `shouldBe`
         (TL.strip . decodeUtf8) expected

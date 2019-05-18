@@ -25,6 +25,7 @@ library
                      , vector
                      , bytestring
                      , unordered-containers
+                     , text-show
 
 executable run-server
   hs-source-dirs:      app

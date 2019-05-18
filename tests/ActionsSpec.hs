@@ -19,3 +19,9 @@ spec =
       let res = AddMessage "the author" "the message"
       expected <- B.readFile "tests/results/action-message.json"
       (fromJust . decode) expected `shouldBe` res
+
+    it "decode user" $ do
+      let res = AddUser  "the user"
+      expected <- B.readFile "tests/results/action-user.json"
+      (fromJust . decode) expected `shouldBe` res
+

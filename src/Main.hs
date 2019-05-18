@@ -23,6 +23,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
+import TextShow
 
 import qualified Actions as Ac (Action(..))
 import qualified Data.Aeson.Encode.Pretty as P
@@ -55,22 +56,37 @@ broadcast message clients = do
 application :: MVar ServerState -> WS.ServerApp
 application state pending = do
   conn <- WS.acceptRequest pending
-  WS.forkPingThread conn 30
+  WS.forkPingThread conn 10
   msg <- WS.receiveData conn
   clients <- readMVar state
   let action = decode msg
   print msg
-  case action of
-    Nothing -> WS.sendTextData conn ("Could not decode" :: Text)
-    Just (Ac.AddMessage {..}) ->
-      WS.sendTextData conn (P.encodePretty $ Rs.AddMessage author message)
-    Just (Ac.AddUser {..}) -> WS.sendTextData conn (P.encodePretty $ Rs.AddUser name)
+  flip finally (disconnect state) $ do 
+    case action of
+      Nothing -> WS.sendTextData conn ("Could not decode" :: Text)
+      Just (Ac.AddUser {..}) ->
+        WS.sendTextData conn (P.encodePretty $ Rs.AddUser name)
+      _ -> WS.sendTextData conn ("Expected add user, got " <> (showt  action) :: Text)
 
 runServer = do
   print "Server Starting"
   state <- newMVar newServerState
   WS.runServer "127.0.0.1" 8989 $ application state
   print "Server Finished"
+
+talk :: Client -> MVar ServerState -> IO ()
+talk (user, conn) state =
+  forever $ do
+    msg <- WS.receiveData conn
+    readMVar state >>= broadcast (user <> ": " <> msg)
+
+-- Remove client and return new state
+disconnect state client = do
+  s <-
+    modifyMVar state $ \s ->
+      let s' = removeClient client s
+       in return (s', s')
+  broadcast (fst client <> " disconnected") s
 
 main :: IO ()
 main = runServer
