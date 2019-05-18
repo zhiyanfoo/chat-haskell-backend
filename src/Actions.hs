@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Actions
   ( Action(..)
@@ -6,12 +7,14 @@ module Actions
 
 import Data.Aeson
   ( FromJSON
+  , ToJSON
   , Value(..)
   , (.:)
   , (.=)
   , decode
   , encode
   , object
+  , toJSON
   , parseJSON
   , withArray
   , withObject
@@ -36,3 +39,12 @@ instance FromJSON Action where
         "ADD_MESSAGE" -> AddMessage <$> o .: "author" <*> o .: "message"
         "ADD_USER" -> AddUser <$> o .: "name"
         _ -> fail ("unknown kind: " ++ kind)
+
+instance ToJSON Action where
+  toJSON AddMessage {..} =
+    object
+      [ "author" .= author
+      , "message" .= message
+      , "type" .= ("ADD_MESSAGE" :: Text)
+      ]
+  toJSON AddUser {..} = object ["name" .= name, "type" .= ("ADD_USER" :: Text)]
