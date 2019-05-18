@@ -68,14 +68,24 @@ application state pending = do
   clients <- readMVar state
   let action = decode msg
   case action of
-    Nothing ->
-      WS.sendTextData
-        conn
-        ("Could not decode: '" <> toStrict (decodeUtf8 msg) <> "'" :: Text)
+    Nothing -> couldNotDecodeResponse conn msg
     Just (Ac.AddUser {..}) ->
       WS.sendTextData conn (P.encodePretty $ Rs.AddUser name)
     _ ->
       WS.sendTextData conn ("Expected add user, got " <> (showt action) :: Text)
+
+couldNotDecodeResponse conn msg =
+  WS.sendTextData
+    conn
+    ("Could not decode: '" <> toStrict (decodeUtf8 msg) <> "'" :: Text)
+
+connectToUser client state =
+  flip finally (disconnect state client) $ do
+    modifyMVar_ state $
+      (\s -> do
+         let s' = addClient client s
+         return s')
+    talk client state
 
 runServerDefault = do
   runServer "127.0.0.1" 8989
@@ -90,7 +100,12 @@ talk :: Client -> MVar ServerState -> IO ()
 talk (user, conn) state =
   forever $ do
     msg <- WS.receiveData conn
-    readMVar state >>= broadcast (user <> ": " <> msg)
+    let action = (decode msg :: Maybe Ac.Action)
+    case action of
+      Nothing -> couldNotDecodeResponse conn msg
+      Just (Ac.AddMessage {..}) -> conn (P.encodePretty $ Rs.AddMessage name)
+    return ()
+    -- readMVar state >>= broadcast (user <> ": " <> msg)
 
 -- Remove client and return new state
 disconnect state client = do
