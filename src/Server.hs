@@ -21,6 +21,7 @@ import Data.Aeson
   , withArray
   , withObject
   )
+import Data.ByteString.Lazy (ByteString)
 import Data.Char (isPunctuation, isSpace)
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -54,10 +55,13 @@ addClient = (:)
 removeClient :: Client -> ServerState -> ServerState
 removeClient client = filter ((/= fst client) . fst)
 
-broadcast :: Text -> ServerState -> IO ()
-broadcast message clients = do
-  T.putStrLn message
+broadcastData :: (Show a, WS.WebSocketsData a) => a -> ServerState -> IO ()
+broadcastData message clients = do
+  print message
   forM_ clients $ \(_, conn) -> WS.sendTextData conn message
+
+broadcast :: Rs.Response -> ServerState -> IO ()
+broadcast response = broadcastData (P.encodePretty response)
 
 application :: MVar ServerState -> WS.ServerApp
 application state pending = do
@@ -103,9 +107,11 @@ talk (user, conn) state =
     let action = (decode msg :: Maybe Ac.Action)
     case action of
       Nothing -> couldNotDecodeResponse conn msg
-      Just (Ac.AddMessage {..}) -> conn (P.encodePretty $ Rs.AddMessage name)
+      Just (Ac.AddMessage {..}) -> do
+        clients <- readMVar state
+        broadcast (Rs.AddMessage author message) clients
     return ()
-    -- readMVar state >>= broadcast (user <> ": " <> msg)
+    -- readMVar state >>= (user <> ": " <> msg)
 
 -- Remove client and return new state
 disconnect state client = do
@@ -113,4 +119,4 @@ disconnect state client = do
     modifyMVar state $ \s ->
       let s' = removeClient client s
        in return (s', s')
-  broadcast (fst client <> " disconnected") s
+  broadcastData (fst client <> " disconnected") s
