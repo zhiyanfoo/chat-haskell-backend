@@ -1,0 +1,10 @@
+version: '3'
+services:
+  server:
+    image: haskell:8
+    container_name: chat-websocket-server
+    volumes:
+     - .:/server
+    entrypoint: ['/server/scripts/deploy.sh']
+    ports:
+        - '8989:8989'

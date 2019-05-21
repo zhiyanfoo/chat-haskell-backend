@@ -1,2 +1,5 @@
+module Main where
 
-main = print "ASD"
+import Server (runServerDefault)
+
+main = runServerDefault
