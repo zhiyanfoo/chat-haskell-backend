@@ -70,7 +70,7 @@ getUsers :: ServerState -> [Text]
 getUsers = (map fst) . fst
 
 getMessages :: ServerState -> [Ms.Message]
-getMessages = snd
+getMessages = reverse . snd
 
 createResponseMessages :: [Ms.Message] -> [Rs.Message]
 createResponseMessages messages = fmap createMessage (zip [0 ..] messages)
@@ -132,7 +132,7 @@ connectToUser client stateW =
     talk client stateW
 
 runServerDefault = do
-  runServer "127.0.0.1" 8989
+  runServer "0.0.0.0" 8989
 
 runServer address port = do
   print "Server Starting"
