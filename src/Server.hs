@@ -78,13 +78,15 @@ broadcast :: Rs.Response -> ServerState -> IO ()
 broadcast response = broadcastData (P.encodePretty response)
 
 broadcastExcept :: Rs.Response -> Text -> ServerState -> IO ()
-broadcastExcept response clientName = broadcastDataExcept (P.encodePretty response) clientName
+broadcastExcept response clientName =
+  broadcastDataExcept (P.encodePretty response) clientName
 
-broadcastDataExcept :: (Show a, WS.WebSocketsData a) => a -> Text -> ServerState -> IO ()
+broadcastDataExcept ::
+     (Show a, WS.WebSocketsData a) => a -> Text -> ServerState -> IO ()
 broadcastDataExcept message clientName state = do
   print message
-  forM_ (filter (\(name, _) -> name /= clientName) (fst state)) $ \(_, conn) -> WS.sendTextData conn message
-
+  forM_ (filter (\(name, _) -> name /= clientName) (fst state)) $ \(_, conn) ->
+    WS.sendTextData conn message
 
 application :: MVar ServerState -> WS.ServerApp
 application state pending = do
@@ -107,9 +109,9 @@ couldNotDecodeResponse conn msg =
 connectToUser client stateW =
   flip finally (disconnect stateW client) $ do
     state <- readMVar stateW
-    WS.sendTextData (snd client) (P.encodePretty (Rs.Users $ getUsers state ))
+    WS.sendTextData (snd client) (P.encodePretty (Rs.Users $ getUsers state))
     let clientName = fst client
-    broadcastExcept (Rs.AddUser {name=clientName}) clientName state
+    broadcastExcept (Rs.AddUser {name = clientName}) clientName state
     modifyMVar_ stateW $
       (\s -> do
          let c = addClient client (fst s)
@@ -141,7 +143,14 @@ talk (user, conn) stateW =
                     (snd s)
                 s' = (fst s, m)
              in return (s', s')
-        broadcastExcept (Rs.AddMessage author message) author state
+        broadcastExcept
+          (Rs.AddMessage
+             { author = author
+             , message = message
+             , id = ((subtract 1) . length . snd $ state)
+             })
+          author
+          state
 
 -- Remove client and return new state
 disconnect state client = do
