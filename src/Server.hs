@@ -33,7 +33,7 @@ import qualified Network.WebSockets as WS
 import qualified Actions as Ac (Action(..))
 import qualified Data.Aeson.Encode.Pretty as P
 import qualified Messages as Ms (Message(..))
-import qualified Responses as Rs (Response(..))
+import qualified Responses as Rs (Message(..), Response(..))
 
 showt = T.pack . show
 
@@ -68,6 +68,16 @@ addMessage = (:)
 
 getUsers :: ServerState -> [Text]
 getUsers = (map fst) . fst
+
+getMessages :: ServerState -> [Ms.Message]
+getMessages = snd
+
+createResponseMessages :: [Ms.Message] -> [Rs.Message]
+createResponseMessages messages = fmap createMessage (zip [0 ..] messages)
+
+createMessage :: (Int, Ms.Message) -> Rs.Message
+createMessage (i, (Ms.Message {..})) =
+  Rs.Message {author = author, message = message, messageId = i}
 
 broadcastData :: (Show a, WS.WebSocketsData a) => a -> ServerState -> IO ()
 broadcastData message state = do
@@ -110,6 +120,9 @@ connectToUser client stateW =
   flip finally (disconnect stateW client) $ do
     state <- readMVar stateW
     WS.sendTextData (snd client) (P.encodePretty (Rs.Users $ getUsers state))
+    WS.sendTextData
+      (snd client)
+      (P.encodePretty (Rs.Messages $ createResponseMessages (getMessages state)))
     let clientName = fst client
     broadcastExcept (Rs.AddUser {name = clientName}) clientName state
     modifyMVar_ stateW $
@@ -144,10 +157,11 @@ talk (user, conn) stateW =
                 s' = (fst s, m)
              in return (s', s')
         broadcastExcept
-          (Rs.AddMessage
+          (Rs.RMessage $
+           Rs.Message
              { author = author
              , message = message
-             , id = ((subtract 1) . length . snd $ state)
+             , messageId = ((subtract 1) . length . snd $ state)
              })
           author
           state
