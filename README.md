@@ -22,3 +22,5 @@ To run the tests using stack you can do the following
 stack build
 stack ghci haskell-server:haskell-server-test
 ```
+
+The frontend can be found [here](https://github.com/zhiyanfoo/ui)
