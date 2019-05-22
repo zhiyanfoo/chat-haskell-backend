@@ -15,3 +15,10 @@ The default port for the server is `8989`. Currently this is just a websocket se
 
 The docker-compose file is not optimized for development, its just used for deployment.
 To develop on this on your local, it is recommended you use a local installation of stack.
+
+To run the tests using stack you can do the following
+
+```bash
+stack build
+stack ghci haskell-server:haskell-server-test
+```
