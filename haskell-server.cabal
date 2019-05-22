@@ -16,7 +16,7 @@ extra-source-files:  README.md
 library 
   hs-source-dirs:      src
   default-language:    Haskell2010
-  exposed-modules:     Actions, Responses, Server
+  exposed-modules:     Actions, Responses, Messages, Server
   build-depends:       base >= 4.7 && < 5
                      , websockets
                      , text

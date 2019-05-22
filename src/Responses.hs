@@ -26,6 +26,8 @@ data Response
   = AddMessage { author :: Text
                , message :: Text }
   | AddUser { name :: Text }
+  | RemoveUser { name :: Text }
+  | Users { users :: [Text]}
   deriving (Show)
 
 instance ToJSON Response where
@@ -36,3 +38,5 @@ instance ToJSON Response where
       , "type" .= ("ADD_MESSAGE" :: Text)
       ]
   toJSON AddUser {..} = object ["name" .= name, "type" .= ("ADD_USER" :: Text)]
+  toJSON RemoveUser {..} = object ["name" .= name, "type" .= ("REMOVE_USER" :: Text)]
+  toJSON Users {..} = object ["users" .= users, "type" .= ("USERS_LIST" :: Text)]
